@@ -38,7 +38,7 @@ struct dynamic_array_private_header {
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
     struct dynamic_array_private_offset {
         struct dynamic_array_private_header header;
-        max_align_t start;
+        max_align_t array;
     };
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     #include <stdint.h>
@@ -51,7 +51,7 @@ struct dynamic_array_private_header {
             double_t _2;
             void *_3;
             void (*_4)();
-        } start;
+        } array;
     };
 #else
     struct dynamic_array_private_offset {
@@ -63,7 +63,7 @@ struct dynamic_array_private_header {
             long double _3;
             void *_4;
             void (*_5)();
-        } start;
+        } array;
     };
 #endif
 
@@ -73,7 +73,7 @@ struct dynamic_array_private_header {
     #define dynamic_array_reallocate realloc
     #define dynamic_array_deallocate free
 #elif !(defined(dynamic_array_allocate) && defined(dynamic_array_reallocate) && defined(dynamic_array_deallocate))
-    #erroror if any of dynamic_array_allocate, dynamic_array_reallocate or dynamic_array_deallocate is defined then all three must be defined
+    #error dynamic_array_allocate, dynamic_array_reallocate and dynamic_array_deallocate must all be defined
 #endif
 
 void *dynamic_array_new(void) {
@@ -81,15 +81,15 @@ void *dynamic_array_new(void) {
 }
 void dynamic_array_delete(void *dynamic_array) {
     if (dynamic_array) {
-        dynamic_array_deallocate((char *)dynamic_array - offsetof(struct dynamic_array_private_offset, start));
+        dynamic_array_deallocate((char *)dynamic_array - offsetof(struct dynamic_array_private_offset, array));
     }
 }
 
 size_t dynamic_array_capacity(const void *dynamic_array) {
-    return dynamic_array ? ((const struct dynamic_array_private_header *)((const char *)dynamic_array - offsetof(struct dynamic_array_private_offset, start)))->capacity : 0;
+    return dynamic_array ? ((const struct dynamic_array_private_header *)((const char *)dynamic_array - offsetof(struct dynamic_array_private_offset, array)))->capacity : 0;
 }
 size_t dynamic_array_maximum_capacity(size_t size) {
-    return ((size_t)-1 - offsetof(struct dynamic_array_private_offset, start)) / size;
+    return ((size_t)-1 - offsetof(struct dynamic_array_private_offset, array)) / size;
 }
 enum dynamic_array_error dynamic_array_set_capacity(void **dynamic_array, size_t capacity, size_t size) {
     if (!dynamic_array) {
@@ -101,47 +101,44 @@ enum dynamic_array_error dynamic_array_set_capacity(void **dynamic_array, size_t
     if (capacity != dynamic_array_capacity(*dynamic_array)) {
         if (*dynamic_array) {
             if (capacity) {
-                struct dynamic_array_private_header *new_dynamic_array = dynamic_array_reallocate((char *)*dynamic_array - offsetof(struct dynamic_array_private_offset, start), offsetof(struct dynamic_array_private_offset, start) + capacity * size);
+                struct dynamic_array_private_header *new_dynamic_array = dynamic_array_reallocate((char *)*dynamic_array - offsetof(struct dynamic_array_private_offset, array), offsetof(struct dynamic_array_private_offset, array) + capacity * size);
                 if (!new_dynamic_array) {
                     return dynamic_array_error_allocation_failure;
                 }
                 new_dynamic_array->capacity = capacity;
-                *dynamic_array = (char *)new_dynamic_array + offsetof(struct dynamic_array_private_offset, start);
+                *dynamic_array = (char *)new_dynamic_array + offsetof(struct dynamic_array_private_offset, array);
             } else {
-                if (dynamic_array_length(*dynamic_array)) {
-                    return dynamic_array_error_out_of_range;
-                }
-                dynamic_array_deallocate((char *)*dynamic_array - offsetof(struct dynamic_array_private_offset, start));
+                dynamic_array_deallocate((char *)*dynamic_array - offsetof(struct dynamic_array_private_offset, array));
                 *dynamic_array = NULL;
             }
         } else {
-            *dynamic_array = dynamic_array_allocate(offsetof(struct dynamic_array_private_offset, start) + capacity * size);
+            *dynamic_array = dynamic_array_allocate(offsetof(struct dynamic_array_private_offset, array) + capacity * size);
             if (!*dynamic_array) {
                 return dynamic_array_error_allocation_failure;
             }
             ((struct dynamic_array_private_header *)*dynamic_array)->capacity = capacity;
             ((struct dynamic_array_private_header *)*dynamic_array)->length = 0;
-            *dynamic_array = (char *)*dynamic_array + offsetof(struct dynamic_array_private_offset, start);
+            *dynamic_array = (char *)*dynamic_array + offsetof(struct dynamic_array_private_offset, array);
         }
     }
     return dynamic_array_error_no_error;
 }
 
 size_t dynamic_array_length(const void *dynamic_array) {
-    return dynamic_array ? ((const struct dynamic_array_private_header *)((const char *)dynamic_array - offsetof(struct dynamic_array_private_offset, start)))->length : 0;
+    return dynamic_array ? ((const struct dynamic_array_private_header *)((const char *)dynamic_array - offsetof(struct dynamic_array_private_offset, array)))->length : 0;
 }
 enum dynamic_array_error dynamic_array_set_length(void *dynamic_array, size_t length) {
     if (length > dynamic_array_capacity(dynamic_array)) {
         return dynamic_array_error_out_of_range;
     }
     if (length != dynamic_array_length(dynamic_array)) {
-        ((struct dynamic_array_private_header *)((char *)dynamic_array - offsetof(struct dynamic_array_private_offset, start)))->length = length;
+        ((struct dynamic_array_private_header *)((char *)dynamic_array - offsetof(struct dynamic_array_private_offset, array)))->length = length;
     }
     return dynamic_array_error_no_error;
 }
 
-#ifndef dynamic_array_private_reserve_capacity
-    size_t dynamic_array_private_reserve_capacity(const void *dynamic_array, size_t length, size_t size) {
+#ifndef dynamic_array_reserve_capacity
+    size_t dynamic_array_reserve_capacity(const void *dynamic_array, size_t length, size_t size) {
         size_t capacity = dynamic_array ? dynamic_array_capacity(dynamic_array) : 1;
         while (capacity < length) {
             if (capacity <= dynamic_array_maximum_capacity(size) / 2) {
@@ -153,9 +150,8 @@ enum dynamic_array_error dynamic_array_set_length(void *dynamic_array, size_t le
         }
         return capacity;
     }
-    #define dynamic_array_private_reserve_capacity dynamic_array_private_reserve_capacity
+    #define dynamic_array_reserve_capacity dynamic_array_reserve_capacity
 #endif
-
 enum dynamic_array_error dynamic_array_reserve(void **dynamic_array, size_t length, size_t size) {
     if (!dynamic_array) {
         return dynamic_array_error_null_pointer;
@@ -164,7 +160,7 @@ enum dynamic_array_error dynamic_array_reserve(void **dynamic_array, size_t leng
         return dynamic_array_error_out_of_range;
     }
     if (length > dynamic_array_capacity(*dynamic_array)) {
-        size_t capacity = dynamic_array_private_reserve_capacity(*dynamic_array, length, size);
+        size_t capacity = dynamic_array_reserve_capacity(*dynamic_array, length, size);
         if (capacity < length) {
             return dynamic_array_error_out_of_range;
         }
