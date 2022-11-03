@@ -18,7 +18,7 @@ int main_string(void) {
 }
 
 int main_primes(void) {
-    unsigned long limit = 100000;
+    unsigned long limit = 1000;
     unsigned long *primes = dynamic_array_new();
     unsigned long number;
     size_t index;
