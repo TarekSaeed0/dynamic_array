@@ -43,7 +43,7 @@ struct dynamic_array_private_header {
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     #include <stdint.h>
     #include <math.h>
-    struct {
+    struct dynamic_array_private_offset {
         struct dynamic_array_private_header header;
         union {
             intmax_t _0;
