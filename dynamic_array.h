@@ -182,9 +182,9 @@ enum dynamic_array_error dynamic_array_resize(void **dynamic_array, size_t lengt
             return error;
         }
         if (value) {
-            size_t i;
-            for (i = dynamic_array_length(*dynamic_array); i < length; i++) {
-                memmove((char *)*dynamic_array + i * size, value, size);
+            size_t index;
+            for (index = dynamic_array_length(*dynamic_array); index < length; index++) {
+                memmove((char *)*dynamic_array + index * size, value, size);
             }
         }
         dynamic_array_set_length(*dynamic_array, length);
