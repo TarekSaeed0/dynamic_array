@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 enum dynamic_array_error {
-    dynamic_array_error_no_error,
+    dynamic_array_error_none,
     dynamic_array_error_null_pointer,
     dynamic_array_error_allocation_failure,
     dynamic_array_error_out_of_range
@@ -121,7 +121,7 @@ enum dynamic_array_error dynamic_array_set_capacity(void **dynamic_array, size_t
             *dynamic_array = (char *)*dynamic_array + offsetof(struct dynamic_array_private_type, array);
         }
     }
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 
 size_t dynamic_array_length(const void *dynamic_array) {
@@ -134,7 +134,7 @@ enum dynamic_array_error dynamic_array_set_length(void *dynamic_array, size_t le
     if (length != dynamic_array_length(dynamic_array)) {
         ((struct dynamic_array_private_header *)((char *)dynamic_array - offsetof(struct dynamic_array_private_type, array)))->length = length;
     }
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 
 #ifndef dynamic_array_reserve_capacity
@@ -166,7 +166,7 @@ enum dynamic_array_error dynamic_array_reserve(void **dynamic_array, size_t leng
         }
         return dynamic_array_set_capacity(dynamic_array, capacity, size);
     }
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 
 enum dynamic_array_error dynamic_array_resize(void **dynamic_array, size_t length, const void *value, size_t size) {
@@ -178,7 +178,7 @@ enum dynamic_array_error dynamic_array_resize(void **dynamic_array, size_t lengt
     }
     if (length != dynamic_array_length(*dynamic_array)) {
         enum dynamic_array_error error = dynamic_array_reserve(dynamic_array, length, size);
-        if (error != dynamic_array_error_no_error) {
+        if (error != dynamic_array_error_none) {
             return error;
         }
         if (value) {
@@ -189,7 +189,7 @@ enum dynamic_array_error dynamic_array_resize(void **dynamic_array, size_t lengt
         }
         dynamic_array_set_length(*dynamic_array, length);
     }
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 
 enum dynamic_array_error dynamic_array_insert(void **dynamic_array, size_t index, size_t length, const void *values, size_t size) {
@@ -201,7 +201,7 @@ enum dynamic_array_error dynamic_array_insert(void **dynamic_array, size_t index
         return dynamic_array_error_out_of_range;
     }
     error = dynamic_array_reserve(dynamic_array, dynamic_array_length(*dynamic_array) + length, size);
-    if (error != dynamic_array_error_no_error) {
+    if (error != dynamic_array_error_none) {
         return error;
     }
     memmove((char *)*dynamic_array + (index + length) * size, (char *)*dynamic_array + index * size, (dynamic_array_length(*dynamic_array) - index) * size);
@@ -209,7 +209,7 @@ enum dynamic_array_error dynamic_array_insert(void **dynamic_array, size_t index
         memmove((char *)*dynamic_array + index * size, values, length * size);
     }
     dynamic_array_set_length(*dynamic_array, dynamic_array_length(*dynamic_array) + length);
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 enum dynamic_array_error dynamic_array_remove(void *dynamic_array, size_t index, size_t length, void *values, size_t size) {
     if (!size || index > dynamic_array_length(dynamic_array) || length > dynamic_array_length(dynamic_array) - index) {
@@ -220,7 +220,7 @@ enum dynamic_array_error dynamic_array_remove(void *dynamic_array, size_t index,
     }
     memmove((char *)dynamic_array + index * size, (char *)dynamic_array + (index + length) * size, (dynamic_array_length(dynamic_array) - index) * size);
     dynamic_array_set_length(dynamic_array, dynamic_array_length(dynamic_array) - length);
-    return dynamic_array_error_no_error;
+    return dynamic_array_error_none;
 }
 
 #endif
